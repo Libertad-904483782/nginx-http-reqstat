@@ -30,6 +30,16 @@ struct ngx_http_reqstat_rbnode_s {
     ngx_atomic_t                 ureq;
     ngx_atomic_t                 urt;
     ngx_atomic_t                 utries;
+    ngx_atomic_t                 http_403;
+    ngx_atomic_t                 http_404;
+    ngx_atomic_t                 http_499;
+    ngx_atomic_t                 http_500;
+    ngx_atomic_t                 http_502;
+    ngx_atomic_t                 http_504;
+    ngx_atomic_t                 ups_5xx;
+    ngx_atomic_t                 ups_4xx;
+    ngx_atomic_t                 ups_502;
+    ngx_atomic_t                 ups_504;
     u_char                       data[1];
 };
 
@@ -94,6 +104,36 @@ typedef struct {
 
 #define NGX_HTTP_REQSTAT_UPS_TRIES                                      \
     offsetof(ngx_http_reqstat_rbnode_t, utries)
+
+#define NGX_HTTP_REQSTAT_403                                            \
+    offsetof(ngx_http_reqstat_rbnode_t, http_403)
+
+#define NGX_HTTP_REQSTAT_404                                            \
+    offsetof(ngx_http_reqstat_rbnode_t, http_404)
+
+#define NGX_HTTP_REQSTAT_499                                            \
+    offsetof(ngx_http_reqstat_rbnode_t, http_499)
+
+#define NGX_HTTP_REQSTAT_500                                            \
+    offsetof(ngx_http_reqstat_rbnode_t, http_500)
+
+#define NGX_HTTP_REQSTAT_502                                            \
+    offsetof(ngx_http_reqstat_rbnode_t, http_502)
+
+#define NGX_HTTP_REQSTAT_504                                            \
+    offsetof(ngx_http_reqstat_rbnode_t, http_504)
+
+#define NGX_HTTP_REQSTAT_UPS_4XX                                        \
+    offsetof(ngx_http_reqstat_rbnode_t, ups_4xx)
+
+#define NGX_HTTP_REQSTAT_UPS_5XX                                        \
+    offsetof(ngx_http_reqstat_rbnode_t, ups_5xx)
+
+#define NGX_HTTP_REQSTAT_UPS_502                                        \
+    offsetof(ngx_http_reqstat_rbnode_t, ups_502)
+
+#define NGX_HTTP_REQSTAT_UPS_504                                        \
+    offsetof(ngx_http_reqstat_rbnode_t, ups_504)
 
 #define REQ_FIELD(node, offset)                                         \
     ((ngx_atomic_t *) ((char *) node + offset))

@@ -17,7 +17,7 @@ ngx_int_t  (*ngx_http_top_body_filter) (ngx_http_request_t *r, ngx_chain_t *ch);
 ngx_int_t  (*ngx_http_top_input_body_filter) (ngx_http_request_t *r,
     ngx_buf_t *buf);
 
-off_t  ngx_http_reqstat_fields[13] = {
+off_t  ngx_http_reqstat_fields[23] = {
     NGX_HTTP_REQSTAT_BYTES_IN,
     NGX_HTTP_REQSTAT_BYTES_OUT,
     NGX_HTTP_REQSTAT_CONN_TOTAL,
@@ -30,7 +30,17 @@ off_t  ngx_http_reqstat_fields[13] = {
     NGX_HTTP_REQSTAT_RT,
     NGX_HTTP_REQSTAT_UPS_REQ,
     NGX_HTTP_REQSTAT_UPS_RT,
-    NGX_HTTP_REQSTAT_UPS_TRIES
+    NGX_HTTP_REQSTAT_UPS_TRIES,
+    NGX_HTTP_REQSTAT_403,
+    NGX_HTTP_REQSTAT_404,
+    NGX_HTTP_REQSTAT_499,
+    NGX_HTTP_REQSTAT_500,
+    NGX_HTTP_REQSTAT_502,
+    NGX_HTTP_REQSTAT_504,
+    NGX_HTTP_REQSTAT_UPS_4XX,
+    NGX_HTTP_REQSTAT_UPS_5XX,
+    NGX_HTTP_REQSTAT_UPS_502,
+    NGX_HTTP_REQSTAT_UPS_504
 };
 
 
@@ -382,7 +392,8 @@ ngx_http_reqstat(ngx_conf_t *cf, ngx_command_t *cmd, void *conf)
 static ngx_int_t
 ngx_http_reqstat_log_handler(ngx_http_request_t *r)
 {
-    ngx_uint_t                    i, j, status, utries;
+    ngx_uint_t                    i, j, status, upstatus, utries;
+    ngx_uint_t                    up_4xx, up_5xx, up_502, up_504;
     ngx_time_t                   *tp;
     ngx_msec_int_t                ms, total_ms;
     ngx_http_reqstat_conf_t      *slcf;
@@ -445,9 +456,23 @@ ngx_http_reqstat_log_handler(ngx_http_request_t *r)
 
         } else if (status >= 400 && status < 500) {
             ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_4XX, 1);
+            if (status == 403) {
+                ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_403, 1);
+            } else if (status == 404) {
+                ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_404, 1);
+            } else if (status == 499) {
+                ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_499, 1);
+            }
 
         } else if (status >= 500 && status < 600) {
             ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_5XX, 1);
+            if (status == 500) {
+                ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_500, 1);
+            } else if (status == 502) {
+                ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_502, 1);
+            } else if (status == 504) {
+                ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_504, 1);
+            }
 
         } else {
             ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_OTHER_STATUS, 1);
@@ -466,6 +491,11 @@ ngx_http_reqstat_log_handler(ngx_http_request_t *r)
             j = 0;
             total_ms = 0;
             utries = 0;
+            up_5xx = 0;
+            up_4xx = 0;
+            up_504 = 0;
+            up_502 = 0;
+
             state = r->upstream_states->elts;
 
             for ( ;; ) {
@@ -480,6 +510,21 @@ ngx_http_reqstat_log_handler(ngx_http_request_t *r)
                #endif
                 ms = ngx_max(ms, 0);
                 total_ms += ms;
+
+                // upstream status
+                if (state[j].status) {
+                    upstatus = state[j].status;
+                    if (upstatus >= 400 && upstatus < 500) {
+                        up_4xx++;
+                    } else if (upstatus >= 500 && upstatus < 600) {
+                        if (upstatus == 502) {
+                            up_502++;
+                        } else if(upstatus == 504) {
+                            up_504++;
+                        }
+                        up_5xx++;
+                    }
+                }
 
                 if (++j == r->upstream_states->nelts) {
                     break;
@@ -496,6 +541,14 @@ ngx_http_reqstat_log_handler(ngx_http_request_t *r)
                                    total_ms);
             ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_UPS_TRIES,
                                    utries);
+            ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_UPS_4XX,
+                                   up_4xx);
+            ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_UPS_5XX,
+                                   up_5xx);
+            ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_UPS_502,
+                                   up_502);
+            ngx_http_reqstat_count(fnode, NGX_HTTP_REQSTAT_UPS_504,
+                                   up_504);
         }
     }
 
