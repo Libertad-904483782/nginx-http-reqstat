@@ -48,7 +48,8 @@ Example
 
     * Line format:
 
-            kv,bytes_in_total,bytes_out_total,conn_total,req_total,2xx,3xx,4xx,5xx,other,rt_total,upstream_req,upstream_rt,upstream_tries
+            kv,bytes_in_total,bytes_out_total,conn_total,req_total,2xx,3xx,4xx,5xx,other,rt_total,upstream_req,upstream_rt,upstream_tries,\
+            http_403,http_404,http_499,http_500,http_502,http_503,ups_4xx,ups_5xx,ups_502,ups_504
 
         * **kv**                value of the variable defined by the directive 'req_status_zone'
         * **bytes_in_total**    total number of bytes received from client
