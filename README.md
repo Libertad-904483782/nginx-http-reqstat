@@ -29,7 +29,7 @@ Example
 ===========
 
     http {
-        req_status_zone server "$host,$server_addr:$server_port" 10M;
+        req_status_zone server "$host|$scheme|$uri" 10M;
 
         server {
             location /tenginestats {
@@ -44,7 +44,7 @@ Example
 
             www.taobao.com,127.0.0.1:80,162,6242,1,1,1,0,0,0,0,10,1,10,1
 
-    * Each line shows the status infomation of a "$host,$server_addr:$server_port".
+    * Each line shows the status infomation of a "$host|$scheme|$uri".
 
     * Line format:
 
@@ -86,9 +86,13 @@ create shared memory for this module. 'zone_name' is the name of memory block.
 
 Example:
 
-    req_status_zone server "$host,$server_addr:$server_port" 10M;
+    req_status_zone server "$host|$scheme|$uri" 10M;
 
-    the memory is 10MB, the key is "$host,$server_addr:$server_port", and the name is "server".
+    the memory is 10MB, the key is "$host|$scheme|$uri", and the name is "server".
+
+    多个变量中间的分隔符不要使用逗号，因为后边的数据也是通过逗号分隔的，不太利于数据采集
+
+    tools中的采集脚本采用的 “|””
 
 * Notice, if you want to use tsar to monitor, you should not use comma in the key.
 
